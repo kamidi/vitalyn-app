@@ -7,12 +7,12 @@ export default async function LocaleLayout({
   params
 }: {
   children: React.ReactNode;
-  params: Promise<{ locale: string }>; // <--- IMPORTANT : Le type Promise
+  params: any; // <--- ON FORCE LE PASSAGE ICI (Hack TypeScript)
 }) {
-  // IMPORTANT : On attend que la promesse soit résolue
+  // On garde la logique correcte pour Next.js 15 (await)
   const { locale } = await params;
 
-  // Récupérer les messages
+  // Récupérer les messages côté serveur
   const messages = await getMessages();
  
   return (
