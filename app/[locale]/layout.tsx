@@ -10,6 +10,7 @@ export default async function LocaleLayout({
   params: any; // <--- ON FORCE LE PASSAGE ICI (Hack TypeScript)
 }) {
   // On garde la logique correcte pour Next.js 15 (await)
+  // TypeScript ne râlera plus car 'any' est accepté partout
   const { locale } = await params;
 
   // Récupérer les messages côté serveur
