@@ -1,14 +1,17 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
-import "../globals.css"; // Attention au chemin qui change (../)
+import "../globals.css"; // Vérifie que ce chemin est bon pour toi
 
 export default async function LocaleLayout({
   children,
-  params: { locale }
+  params
 }: {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>; // <--- CHANGEMENT 1 : C'est une Promise maintenant
 }) {
+  // CHANGEMENT 2 : On doit "attendre" les paramètres
+  const { locale } = await params;
+
   // Récupérer les messages côté serveur
   const messages = await getMessages();
  
