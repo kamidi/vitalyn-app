@@ -1,21 +1,19 @@
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
-import "../globals.css"; 
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import type { ReactNode } from "react";
+import "../globals.css";
 
 export default async function LocaleLayout({
   children,
-  params
+  params,
 }: {
-  children: React.ReactNode;
-  params: any; // <--- ON FORCE LE PASSAGE ICI (Hack TypeScript)
+  children: ReactNode;
+  params: { locale: string };
 }) {
-  // On garde la logique correcte pour Next.js 15 (await)
-  // TypeScript ne râlera plus car 'any' est accepté partout
-  const { locale } = await params;
+  const { locale } = params; // ✅ PAS de await
 
-  // Récupérer les messages côté serveur
-  const messages = await getMessages();
- 
+  const messages = await getMessages({ locale });
+
   return (
     <html lang={locale}>
       <body>
