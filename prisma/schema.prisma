@@ -1,0 +1,213 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL") // Décommenter si utilisation de Supabase/Neon avec pooling
+}
+
+// --------------------------------------------------------
+// 1. ENUMS (Standardisation des données)
+// --------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+  COACH // Pour la V2
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum UnitSystem {
+  METRIC   // kg, cm
+  IMPERIAL // lbs, ft
+}
+
+// Les silhouettes de 1 à 6 (Visual Body Fat estimation)
+enum BodyShape {
+  SHAPE_1 // Très sec / Maigre
+  SHAPE_2
+  SHAPE_3 // Moyen
+  SHAPE_4
+  SHAPE_5
+  SHAPE_6 // Surpoids important
+}
+
+// Types de transactions pour le système de points
+enum PointReason {
+  WELCOME_BONUS    // +100 au départ
+  DAILY_DECAY      // -X chaque jour (Le coût de la vie)
+  WORKOUT_COMPLETE // +X Récompense sport
+  CALORIE_TARGET   // +X Récompense nutrition
+  PURCHASE         // +X Achat (V2)
+  ADMIN_ADJUSTMENT // +/- Correction manuelle
+}
+
+// --------------------------------------------------------
+// 2. AUTHENTIFICATION & UTILISATEUR
+// --------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  passwordHash  String?   // Optionnel car si un jour OAuth (Google), pas de pwd
+  emailVerified DateTime?
+  image         String?
+  
+  role          Role      @default(USER)
+  locale        String    @default("fr") // Pour i18n (fr/en)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // -- Économie (Points) --
+  currentPoints Int       @default(100) // Cache pour lecture rapide
+  
+  // -- Relations --
+  profile       UserProfile?      // Données physiques
+  program       Program?          // Programme généré
+  dailyLogs     DailyLog[]        // Tracking quotidien
+  pointLedger   PointTransaction[] // Historique comptable
+  
+  // Tables nécessaires si on ajoute "Login with Google" plus tard (Auth.js adapters)
+  accounts      Account[]
+  sessions      Session[]
+}
+
+// --------------------------------------------------------
+// 3. ONBOARDING & PROFIL PHYSIQUE
+// --------------------------------------------------------
+
+model UserProfile {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  gender        Gender
+  birthDate     DateTime
+  height        Int       // Toujours stocké en cm
+  weight        Float     // Toujours stocké en kg
+  
+  targetWeight  Float?    // Optionnel
+  unitSystem    UnitSystem @default(METRIC)
+
+  // Logique visuelle
+  currentShape  BodyShape
+  goalShape     BodyShape
+  
+  // Engagement
+  weeklyWorkoutDays Int   @default(3) // 1 à 7
+
+  updatedAt     DateTime  @updatedAt
+}
+
+// --------------------------------------------------------
+// 4. MOTEUR DÉTERMINISTE (Le Programme)
+// --------------------------------------------------------
+
+model Program {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Objectifs calculés par ton algorithme
+  dailyCalories Int       // Objectif : Calories actives ou totales (selon ta logique)
+  dailySteps    Int       // Objectif : Pas
+  weeklyResistanceSessions Int // Objectif : Muscu/Renfo
+
+  // Métadonnées
+  focus         String?   // Ex: "Perte de gras", "Recomposition" (purement informatif)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// --------------------------------------------------------
+// 5. TRACKING & SANTÉ (Prêt pour HealthKit)
+// --------------------------------------------------------
+
+model DailyLog {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date          DateTime  @db.Date // Important: Date sans heure (YYYY-MM-DD)
+  
+  // Données réelles saisies ou sync
+  stepsCount    Int       @default(0)
+  activeCalories Int      @default(0) // Calories brûlées
+  workoutDone   Boolean   @default(false)
+  
+  // Statut de réussite (pour calcul de points)
+  isSuccess     Boolean   @default(false)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([userId, date]) // Un seul log par jour par user
+  @@index([userId, date])
+}
+
+// --------------------------------------------------------
+// 6. SYSTÈME DE POINTS (Ledger)
+// --------------------------------------------------------
+
+model PointTransaction {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  amount        Int       // Peut être négatif (-10) ou positif (+20)
+  reason        PointReason
+  description   String?   // Ex: "Séance du 12/05 validée"
+  
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// --------------------------------------------------------
+// 7. COMPATIBILITÉ AUTH.JS (Standard)
+// --------------------------------------------------------
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

@@ -1,0 +1,18 @@
+{
+  "HomePage": {
+    "heroTitle": "Votre forme, votre capital.",
+    "heroSubtitle": "Vitalyn est l'application de suivi santé qui transforme vos efforts quotidiens en capital points. Simple. Sans IA. Juste de la science.",
+    "ctaStart": "Commencer maintenant",
+    "ctaLogin": "Se connecter",
+    "feature1Title": "Approche Scientifique",
+    "feature1Desc": "Pas de chatgpt. Un algorithme déterministe basé sur votre métabolisme.",
+    "feature2Title": "Système de Points",
+    "feature2Desc": "Chaque effort vous rapporte. Gérez votre santé comme un compte en banque.",
+    "feature3Title": "Prêt pour iOS",
+    "feature3Desc": "Une architecture robuste prête à se synchroniser avec vos appareils."
+  },
+  "Auth": {
+    "login": "Connexion",
+    "register": "Inscription"
+  }
+}

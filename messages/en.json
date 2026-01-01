@@ -1,0 +1,18 @@
+{
+  "HomePage": {
+    "heroTitle": "Your fitness, your asset.",
+    "heroSubtitle": "Vitalyn is the health tracker that turns your daily efforts into capital points. Simple. No AI. Just science.",
+    "ctaStart": "Start Now",
+    "ctaLogin": "Login",
+    "feature1Title": "Scientific Approach",
+    "feature1Desc": "No chatgpt. A deterministic algorithm based on your metabolism.",
+    "feature2Title": "Point System",
+    "feature2Desc": "Every effort pays off. Manage your health like a bank account.",
+    "feature3Title": "iOS Ready",
+    "feature3Desc": "Robust architecture ready to sync with your devices."
+  },
+  "Auth": {
+    "login": "Login",
+    "register": "Register"
+  }
+}
